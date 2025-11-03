@@ -1,32 +1,32 @@
-# Custom illumination unit for Chara braunii cultivation
+# Custom illumination unit for *Chara braunii* cultivation
 
-From the publication
+From the publication:
 
 ### Optimized protocols for the laboratory maintenance and functional testing of *Chara braunii*
 
-Authors: Katarina Kurtović, Jan Petrášek and Stanislav Vosolsobě
+Authors: Katarina Kurtović, Jan Petrášek, and Stanislav Vosolsobě
 
 Charles University, Department of Experimental Plant Biology
 
-Code desigh: Stanislav Vosolsobě
+Code design: Stanislav Vosolsobě
 
-Contact: vosolsob@natur.cuni.cz
+Contact: [vosolsob@natur.cuni.cz](mailto:vosolsob@natur.cuni.cz)
 
-This README file include the description and instalation instructions for the script [light.py](light.py), which is the example of fully functional core script for the LEDs control in a cultivation box.
+This README file includes a description and installation instructions for the script [light.py](light.py), which is an example of a fully functional core script for LED control in a cultivation box.
 
-For real application, we recommend to implement next extension, which enables to set the parameters via command line or from the file. For inspiration, please check our complex control script for a cultivation box equipped by both light and temperature control [here](https://github.com/vosolsob/Cultivation_box). The box construction is descriped in this [paper](https://nph.onlinelibrary.wiley.com/doi/10.1111/nph.70019) Kurtović et al. (2025): The role of indole-3-acetic acid and characterization of PIN transporters in complex streptophyte alga Chara braunii. New Phytologist 245(3). DOI: https://doi.org/10.1111/nph.70019.
+For real applications, we recommend implementing additional extensions that enable setting the parameters via the command line or from a file. For inspiration, please check our comprehensive control script for a cultivation box equipped with both light and temperature control [here](https://github.com/vosolsob/Cultivation_box). The box construction is described in this [paper](https://nph.onlinelibrary.wiley.com/doi/10.1111/nph.70019) by Kurtović et al. (2025): *The role of indole-3-acetic acid and characterization of PIN transporters in complex streptophyte alga Chara braunii*. New Phytologist 245(3). DOI: [https://doi.org/10.1111/nph.70019](https://doi.org/10.1111/nph.70019).
 
-We implemented the reading of the parameters from the file as well as the additional checking [script](https://github.com/vosolsob/Cultivation_box/blob/main/box_check.sh), which is run automatically during the launch of Raspberry Pi and check the run of main control [script](https://github.com/vosolsob/Cultivation_box/blob/main/box.py). In the case of a spontaneous restart of the Raspberry Pi, the box doesn't loos a control. 
+We implemented parameter reading from a file as well as an additional checking [script](https://github.com/vosolsob/Cultivation_box/blob/main/box_check.sh), which runs automatically during Raspberry Pi startup and verifies the operation of the main control [script](https://github.com/vosolsob/Cultivation_box/blob/main/box.py). In the case of a spontaneous Raspberry Pi restart, the box does not lose control.
 
 ## Description of the script
 
-This is Python 3 script for Raspberry PI, which enables a regulation of a custom LED panel for the cultivation of *Chara braunii*. Full script is in the file [light.py](light.py)
+This Python 3 script for the Raspberry Pi enables regulation of a custom LED panel for the cultivation of *Chara braunii*. The full script is in the file [light.py](light.py).
 
-The regulation is based on PWM regulation. The setup enables to control "sunrise" and "sunset" times; illumination intensity can be regulated sharply (on/off), or according to sine wave, which mimics the natural light intensity.
+The illumination is regulated using PWM. The setup allows control of "sunrise" and "sunset" times; the light intensity can be regulated sharply (on/off) or according to a sine wave, which mimics natural light intensity.
 
 ### Import of libraries
 
-The library `pigpio` is important for higher time-resolution of PWM generator 
+The library `pigpio` is important for higher time-resolution of the PWM generator.
 
 ```python
 #!/usr/bin/python3
@@ -38,23 +38,25 @@ import pigpio
 
 ### Setting of parameters
 
-The `sunrise` and `sunset` give the time of switching on/off the lights. The `led` array gives the relative intensities of individual LED types (on 0-100 % scale). Is the sine wave of illumination is required, set `sin_l = 1`.  The light intensity is then regulated using a sinusoidal curve with a fixed period of 24 hours, reaching its peak halfway between sunrise and sunset. If the day length (time between sunrise and sunset) differs from 12 hours, a threshold value of the sine function is calculated that matches this day-length interval. The light output is then controlled according to the normalized upper arc of the sine wave above this threshold.
+The `sunrise` and `sunset` variables define the times for switching the lights on and off. The `led` array specifies the relative intensities of individual LED types (on a 0–100% scale). If a sine wave of illumination is required, set `sin_l = 1`.
 
-![ilumination_curve](curve.png "Ilumination curve")
+The light intensity is then regulated using a sinusoidal curve with a fixed period of 24 hours, reaching its peak halfway between sunrise and sunset. If the day length (the time between sunrise and sunset) differs from 12 hours, a threshold value of the sine function is calculated to match this interval. The light output is then controlled according to the normalized upper arc of the sine wave above this threshold.
 
-Basic sinusoidal curve is computed by the equation
+![illumination\_curve](curve.png "Illumination curve")
 
-$$cos\frac{2 \pi (x - noon)}{24},$$
+The basic sinusoidal curve is computed using the equation
 
-where $noon = suset - sunrise$.
+$$\cos\frac{2 \pi (x - noon)}{24},$$
 
-The threshold at the sunrise is computed based on 
+where $noon = \frac{sunset + sunrise}{2}$.
 
-$$B = cos\frac{2 \pi (sunrise - noon)}{24}$$
+The threshold at sunrise is computed as
 
-and the original sive wave is shifted down by this value and normalized:
+$$B = \cos\frac{2 \pi (sunrise - noon)}{24}$$
 
-$$\frac{cos\frac{2 \pi (x - noon)}{24} - B}{1-B}$$
+and the original sine wave is shifted down by this value and normalized:
+
+$$\frac{\cos\frac{2 \pi (x - noon)}{24} - B}{1-B}$$
 
 ---
 
@@ -62,17 +64,17 @@ GPIO outputs must be assigned using the Raspberry Pi’s GPIO numbers, not the p
 
 ---
 
-Fast test mode runs the illumination control with given time increment in each step of the main loop.
+Fast test mode runs the illumination control with a given time increment for each step of the main loop.
 
 ```python
-# Setting of time interval for illumination in hours (e.g. 6.5 = 06:30)
+# Setting of time interval for illumination in hours (e.g., 6.5 = 06:30)
 sunrise = 6.0 
 sunset  = 18.0 
 
 # LED intensities (percent) for RGBWUVP — 0–100 %
 led = [10, 30, 5, 100, 0, 10]
 
-# Use sine wave illumination? (1=yes, 0=always max during day)
+# Use sine wave illumination? (1 = yes, 0 = always max during day)
 sin_l = 1
 
 # GPIO PIN assignment
@@ -84,7 +86,7 @@ U = 22
 P = 23
 
 # Fast test mode — set simulated hour increments (0 for real clock)
-fast_test = 0  # e.g. 0.1 for simulation
+fast_test = 0  # e.g., 0.1 for simulation
 ```
 
 ### Definition of control functions
@@ -93,7 +95,7 @@ fast_test = 0  # e.g. 0.1 for simulation
 pi = pigpio.pi()
 
 def LEDs(led, ilum):
-    """Set duty cycle for each channel (0-100% per color * illumination curve)."""
+    """Set duty cycle for each channel (0–100% per color * illumination curve)."""
     scale = lambda x: round(2.55 * ilum * x)
     pins = [R, G, B, W, U, P]
 
@@ -106,14 +108,14 @@ def illum(hour, sin_mode):
     sunlen = sunset - sunrise
     noon = (sunrise + sunset) / 2
 
-    # normalizing curve base
+    # Normalizing curve base
     B = math.cos(math.pi * (sunrise - noon) / 12)
     sun = math.cos(math.pi * (hour - noon) / 12) - B
 
-    # normalized 0–1 sinusoid
+    # Normalized 0–1 sinusoid
     norm_light = sun / (1 - B)
 
-    # binary day/night flag
+    # Binary day/night flag
     day = 1 if sunrise <= hour <= sunset else 0
 
     if sin_mode == 0:
@@ -144,16 +146,16 @@ while True:
 
     print(f"Time {hours:.2f}h | Light intensity: {light:.3f}")
 
-    # increment time in simulation
+    # Increment time in simulation
     hours += fast_test
     if hours >= 24: hours = 0
 
     time.sleep(1 if fast_test else 5)
 ```
 
-## How to install and run it?
+## How to install and run it
 
-First, install PIGPIO daemon by the instruction [here](https://abyz.me.uk/rpi/pigpio/download.html), shortly:
+First, install the PIGPIO daemon by following the instructions [here](https://abyz.me.uk/rpi/pigpio/download.html), briefly:
 
 ```sh
 wget https://github.com/joan2937/pigpio/archive/master.zip
@@ -163,13 +165,13 @@ make
 sudo make install
 ```
 
-Next, run PIGPIO after each start of the Raspberry Pi
+Next, start PIGPIO after each Raspberry Pi startup:
 
 ```sh
 sudo pigpiod
 ```
 
-Finally, download [light.py](light.py) to the selected folder and run it by a command
+Finally, download [light.py](light.py) to your chosen folder and run it with:
 
 ```sh
 python3 light.py
