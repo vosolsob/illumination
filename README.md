@@ -12,13 +12,13 @@ Code desigh: Stanislav Vosolsobě
 
 Contact: vosolsob@natur.cuni.cz
 
-This is Raspberry PI script which enables a regulation of a custom LED panel for the cultivation of *Chara braunii*.
+This is Python 3 script for Raspberry PI, which enables a regulation of a custom LED panel for the cultivation of *Chara braunii*.
 
-The regulation is based on PWM regulation. The setup enables to control "sunrise" and "sunset" times; illumination intensity can be regulated sharply (on/off), or according to sinusoidal curve, which mimics the natural light intensity.
+The regulation is based on PWM regulation. The setup enables to control "sunrise" and "sunset" times; illumination intensity can be regulated sharply (on/off), or according to sine wave, which mimics the natural light intensity.
 
 ## Import of libraries
 
-The library `pigpio` is important for the 
+The library `pigpio` is important for higher time-resolution of PWM generator 
 
 ```python
 #!/usr/bin/python3
@@ -26,18 +26,21 @@ The library `pigpio` is important for the
 import time
 import math
 import pigpio
+```
 
-# =======================
-# USER PARAMETERS
-# =======================
+## Setting of parameters
 
-sunrise = 6.0    # hour of sunrise (e.g. 6.0 = 06:00)
-sunset  = 18.0   # hour of sunset (e.g. 18.0 = 18:00)
+The `sunrise` and `sunset` give the time of switching on/off the lights. The `led` array gives the relative intensities of individual LED types (on 0-100 % scale). Is the sine wave of illumination is required, set `sin_l = 1`.  The light intensity is then regulated using a sinusoidal curve with a fixed period of 24 hours, reaching its peak halfway between sunrise and sunset. If the day length (time between sunrise and sunset) differs from 12 hours, a threshold value of the sine function is calculated that matches this day-length interval. The light output is then controlled according to the normalized upper arc of the sine wave above this threshold.
 
-# LED intensities (percent) for RGBWUVPA — 0–100 %
+```python
+# Setting of time interval for illumination in hours (e.g. 6.5 = 06:30)
+sunrise = 6.0 
+sunset  = 18.0 
+
+# LED intensities (percent) for RGBWUVP — 0–100 %
 led = [10, 30, 5, 100, 0, 10]
 
-# Use sinusoidal daylight cycle? (1=yes, 0=always max during day)
+# Use sine wave illumination? (1=yes, 0=always max during day)
 sin_l = 1
 
 # Fast test mode — set simulated hour increments (0 for real clock)
