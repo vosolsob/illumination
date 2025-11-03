@@ -12,7 +12,7 @@ Code desigh: Stanislav Vosolsobě
 
 Contact: vosolsob@natur.cuni.cz
 
-This is Python 3 script for Raspberry PI, which enables a regulation of a custom LED panel for the cultivation of *Chara braunii*.
+This is Python 3 script for Raspberry PI, which enables a regulation of a custom LED panel for the cultivation of *Chara braunii*. Full script is in the file [light.py](light.py)
 
 The regulation is based on PWM regulation. The setup enables to control "sunrise" and "sunset" times; illumination intensity can be regulated sharply (on/off), or according to sine wave, which mimics the natural light intensity.
 
@@ -143,7 +143,26 @@ while True:
     time.sleep(1 if fast_test else 5)
 ```
 
-## How to run it?
+## How to install and run it?
 
+First, install PIGPIO daemon by the instruction [here](https://abyz.me.uk/rpi/pigpio/download.html), shortly:
 
+```sh
+wget https://github.com/joan2937/pigpio/archive/master.zip
+unzip master.zip
+cd pigpio-master
+make
+sudo make install
+```
 
+Next, run PIGPIO after each start of the Raspberry Pi
+
+```sh
+sudo pigpiod
+```
+
+Finally, download [light.py](light.py) to the selected folder and run it by a command
+
+```sh
+python3 light.py
+```
