@@ -12,11 +12,19 @@ Code desigh: Stanislav Vosolsobě
 
 Contact: vosolsob@natur.cuni.cz
 
+This README file include the description and instalation instructions for the script [light.py](light.py), which is the example of fully functional core script for the LEDs control in a cultivation box.
+
+For real application, we recommend to implement next extension, which enables to set the parameters via command line or from the file. For inspiration, please check our complex control script for a cultivation box equipped by both light and temperature control [here](https://github.com/vosolsob/Cultivation_box). The box construction is descriped in this [paper](https://nph.onlinelibrary.wiley.com/doi/10.1111/nph.70019) Kurtović et al. (2025): The role of indole-3-acetic acid and characterization of PIN transporters in complex streptophyte alga Chara braunii. New Phytologist 245(3). DOI: https://doi.org/10.1111/nph.70019.
+
+We implemented the reading of the parameters from the file as well as the additional checking [script](https://github.com/vosolsob/Cultivation_box/blob/main/box_check.sh), which is run automatically during the launch of Raspberry Pi and check the run of main control [script](https://github.com/vosolsob/Cultivation_box/blob/main/box.py). In the case of a spontaneous restart of the Raspberry Pi, the box doesn't loos a control. 
+
+## Description of the script
+
 This is Python 3 script for Raspberry PI, which enables a regulation of a custom LED panel for the cultivation of *Chara braunii*. Full script is in the file [light.py](light.py)
 
 The regulation is based on PWM regulation. The setup enables to control "sunrise" and "sunset" times; illumination intensity can be regulated sharply (on/off), or according to sine wave, which mimics the natural light intensity.
 
-## Import of libraries
+### Import of libraries
 
 The library `pigpio` is important for higher time-resolution of PWM generator 
 
@@ -28,7 +36,7 @@ import math
 import pigpio
 ```
 
-## Setting of parameters
+### Setting of parameters
 
 The `sunrise` and `sunset` give the time of switching on/off the lights. The `led` array gives the relative intensities of individual LED types (on 0-100 % scale). Is the sine wave of illumination is required, set `sin_l = 1`.  The light intensity is then regulated using a sinusoidal curve with a fixed period of 24 hours, reaching its peak halfway between sunrise and sunset. If the day length (time between sunrise and sunset) differs from 12 hours, a threshold value of the sine function is calculated that matches this day-length interval. The light output is then controlled according to the normalized upper arc of the sine wave above this threshold.
 
@@ -79,7 +87,7 @@ P = 23
 fast_test = 0  # e.g. 0.1 for simulation
 ```
 
-## Definition of control functions
+### Definition of control functions
 
 ```python
 pi = pigpio.pi()
@@ -114,7 +122,7 @@ def illum(hour, sin_mode):
         return max(0, day * norm_light)
 ```
 
-## Main loop
+### Main loop
 
 ```python
 print("🌞 Illumination control started.")
