@@ -32,6 +32,30 @@ import pigpio
 
 The `sunrise` and `sunset` give the time of switching on/off the lights. The `led` array gives the relative intensities of individual LED types (on 0-100 % scale). Is the sine wave of illumination is required, set `sin_l = 1`.  The light intensity is then regulated using a sinusoidal curve with a fixed period of 24 hours, reaching its peak halfway between sunrise and sunset. If the day length (time between sunrise and sunset) differs from 12 hours, a threshold value of the sine function is calculated that matches this day-length interval. The light output is then controlled according to the normalized upper arc of the sine wave above this threshold.
 
+![ilumination_curve](curve.png "Ilumination curve")
+
+Basic sinusoidal curve is computed by the equation
+
+$$cos\frac{2 \pi (x - noon)}{24},$$
+
+where $noon = suset - sunrise$.
+
+The threshold at the sunrise is computed based on 
+
+$$B = cos\frac{2 \pi (sunrise - noon)}{24}$$
+
+and the original sive wave is shifted down by this value and normalized:
+
+$$\frac{cos\frac{2 \pi (x - noon)}{24} - B}{1-B}$$
+
+---
+
+GPIO outputs must be assigned using the Raspberry Pi’s GPIO numbers, not the physical pin numbers on the header.
+
+---
+
+Fast test mode runs the illumination control with given time increment in each step of the main loop.
+
 ```python
 # Setting of time interval for illumination in hours (e.g. 6.5 = 06:30)
 sunrise = 6.0 
@@ -43,31 +67,27 @@ led = [10, 30, 5, 100, 0, 10]
 # Use sine wave illumination? (1=yes, 0=always max during day)
 sin_l = 1
 
+# GPIO PIN assignment
+R = 4
+B = 17
+G = 18
+W = 27
+U = 22
+P = 23
+
 # Fast test mode — set simulated hour increments (0 for real clock)
 fast_test = 0  # e.g. 0.1 for simulation
+```
 
-# =======================
-# GPIO PIN ASSIGNMENT
-# =======================
+## Definition of control functions
 
-R = 12
-G = 25
-B = 22
-W = 23
-U = 5
-P = 6
-A = 24
-
+```python
 pi = pigpio.pi()
-
-# =======================
-# FUNCTIONS
-# =======================
 
 def LEDs(led, ilum):
     """Set duty cycle for each channel (0-100% per color * illumination curve)."""
     scale = lambda x: round(2.55 * ilum * x)
-    pins = [R, G, B, W, U, P, A]
+    pins = [R, G, B, W, U, P]
 
     for pin, pct in zip(pins, led):
         pi.set_PWM_dutycycle(pin, scale(pct))
@@ -92,11 +112,11 @@ def illum(hour, sin_mode):
         return day
     else:
         return max(0, day * norm_light)
+```
 
-# =======================
-# MAIN LOOP
-# =======================
+## Main loop
 
+```python
 print("🌞 Illumination control started.")
 print(f"Sunrise: {sunrise}h, Sunset: {sunset}h, Sinusoid: {sin_l}, Fast-step: {fast_test}")
 
@@ -121,4 +141,9 @@ while True:
     if hours >= 24: hours = 0
 
     time.sleep(1 if fast_test else 5)
+```
+
+## How to run it?
+
+
 
